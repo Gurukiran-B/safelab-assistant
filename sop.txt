@@ -1,0 +1,21 @@
+FIRE IN LAB SOP (fire, lab fire, fire accident):
+
+Step 1: Raise alarm and inform everyone in the lab
+Step 2: Switch off gas and electrical supply if safe
+Step 3: Use fire extinguisher if fire is small
+Step 4: Evacuate immediately through emergency exit
+Step 5: Inform lab in-charge
+
+Warning: Do not use water on electrical fire
+
+---
+
+CHEMICAL SPILL SOP (chemical spill, acid spill, chemical leak):
+
+Step 1: Wear gloves and safety equipment
+Step 2: Identify the chemical
+Step 3: Use spill kit to contain the spill
+Step 4: Avoid direct contact
+Step 5: Inform lab supervisor
+
+Warning: Do not inhale fumes

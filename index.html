@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SOP Safety Assistant</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body { background:#0f172a; color:white; }
+.glass { background:rgba(255,255,255,0.05); }
+.emergency { background:rgba(255,0,0,0.15); border:1px solid red; }
+</style>
+</head>
+
+<body class="flex flex-col h-screen">
+
+<header class="p-4 border-b border-gray-700 flex justify-between">
+<h1 class="text-xl font-bold">🚨 SOP Safety Assistant</h1>
+<button onclick="clearChat()" class="text-gray-400">Clear Chat</button>
+</header>
+
+<div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+<div class="p-4 border-t border-gray-700 flex gap-2 items-center">
+
+<input id="query" class="flex-1 p-3 bg-gray-800 rounded"
+placeholder="Describe situation...">
+
+<button onclick="startVoice()" class="bg-green-600 px-3 py-2 rounded">
+🎤
+</button>
+
+<button onclick="sendQuery()" class="bg-blue-600 px-4 py-2 rounded">
+Send
+</button>
+
+</div>
+
+<script>
+
+// ---------- FORMAT TEXT ----------
+function formatText(text){
+    return text
+        .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
+        .replace(/\n/g,"<br>");
+}
+
+// ---------- TEXT TO SPEECH ----------
+function speak(text){
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-US";
+    speech.rate = 1;
+    speech.pitch = 1;
+    window.speechSynthesis.speak(speech);
+}
+
+// ---------- SEND QUERY ----------
+async function sendQuery(){
+    const input=document.getElementById("query");
+    const chat=document.getElementById("chat");
+
+    const query=input.value.trim();
+    if(!query) return;
+
+    // user message
+    chat.innerHTML+=`
+    <div class="flex justify-end">
+        <div class="bg-blue-600 px-4 py-2 rounded max-w-xs">${query}</div>
+    </div>`;
+
+    input.value="";
+    chat.scrollTop=chat.scrollHeight;
+
+    // loading
+    const loading=document.createElement("div");
+    loading.innerHTML=`<div class="text-blue-400 animate-pulse">Analyzing SOP...</div>`;
+    chat.appendChild(loading);
+
+    try{
+        const res=await fetch("http://127.0.0.1:5000/ask",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({query})
+        });
+
+        const data=await res.json();
+        loading.remove();
+
+        const formatted = formatText(data.answer);
+
+        // bot message
+        chat.innerHTML+=`
+        <div class="flex justify-start">
+            <div class="${data.emergency?'emergency':'glass'} px-4 py-3 rounded max-w-md">
+                ${data.emergency?"<b>🚨 EMERGENCY MODE</b><br>":""}
+                ${formatted}
+            </div>
+        </div>`;
+
+        // 🔊 SPEAK RESPONSE
+        speak(data.answer);
+
+    }catch(e){
+        loading.remove();
+        chat.innerHTML+=`<div class="text-red-400">Backend error</div>`;
+    }
+
+    chat.scrollTop=chat.scrollHeight;
+}
+
+// ---------- VOICE INPUT ----------
+function startVoice(){
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Voice not supported in this browser");
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = "en-US";
+
+    recognition.start();
+
+    recognition.onstart = () => {
+        console.log("🎤 Listening...");
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+
+        document.getElementById("query").value = transcript;
+
+        console.log("You said:", transcript);
+
+        sendQuery();
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Voice error:", event.error);
+    };
+}
+
+// ---------- CLEAR CHAT ----------
+function clearChat(){
+    document.getElementById("chat").innerHTML="";
+}
+
+</script>
+
+</body>
+</html>
